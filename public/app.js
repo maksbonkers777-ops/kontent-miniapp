@@ -55,6 +55,32 @@ if (hasTelegram) {
   if (tg.initDataUnsafe?.user?.username) form.elements.contact.value = `@${tg.initDataUnsafe.user.username}`;
 }
 
+function showPersonalIdForSetup() {
+  const id = tg?.initDataUnsafe?.user?.id;
+  if (!Number.isSafeInteger(id) || id <= 0 || document.querySelector('#personal-telegram-id')) return;
+  // Convenience for the owner during setup, not an authentication decision.
+  // Signed initData remains independently checked by the server on submission.
+  const panel = document.createElement('details');
+  panel.className = 'notice';
+  const title = document.createElement('summary');
+  title.textContent = 'Настройка получения заявок · мой Telegram ID';
+  const explanation = document.createElement('p');
+  explanation.textContent = 'Если вы владелец бота и хотите получать заявки лично, скопируйте ID своего профиля в настройку TELEGRAM_ADMIN_CHAT_ID в Render. ID берётся из профиля в клиенте Telegram.';
+  const input = document.createElement('input');
+  input.id = 'personal-telegram-id'; input.readOnly = true; input.value = String(id);
+  input.setAttribute('aria-label', 'Ваш Telegram ID');
+  const copy = document.createElement('button');
+  copy.type = 'button'; copy.className = 'outline'; copy.textContent = 'Скопировать мой ID';
+  const result = document.createElement('p');
+  result.setAttribute('role', 'status');
+  copy.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(String(id)); result.textContent = 'ID скопирован.'; }
+    catch { input.focus(); input.select(); result.textContent = 'ID выделен. Скопируйте его вручную.'; }
+  });
+  panel.append(title, explanation, input, copy, result);
+  connection.after(panel);
+}
+
 async function loadConfig() {
   try {
     const response = await fetch('/api/config');
@@ -69,6 +95,7 @@ async function loadConfig() {
       }
     } else if (!configuration.bookingEnabled) {
       connection.textContent = 'Приём заявок ещё не подключён. Загляни позже.';
+      showPersonalIdForSetup();
     } else {
       connection.textContent = 'Ты в Telegram. Можно отправить заявку команде.';
       connection.classList.add('ready'); submit.disabled = false;
