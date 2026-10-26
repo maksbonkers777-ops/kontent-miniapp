@@ -3,8 +3,11 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
+export const CATALOG = JSON.parse(await readFile(new URL('./catalog.json', import.meta.url), 'utf8'));
+const itemById = new Map(CATALOG.items.map(item => [item.id, item]));
+
 export const SERVICES = Object.freeze({
-  production: 'Продакшн', space: 'Пространство', school: 'Контент-школа', events: 'Мероприятия'
+  production: 'Продакшн', rental: 'Техника и рентал', space: 'Пространство', school: 'Контент-школа', events: 'Мероприятия', mixed: 'Несколько направлений'
 });
 const assets = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
@@ -35,18 +38,29 @@ export function verifyInitData(raw, token, now = Math.floor(Date.now() / 1000)) 
 
 function validate(body) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) return null;
-  const { service, name, contact, message, date = '', consent, requestId } = body;
+  const { service, name, contact, message, date = '', consent, requestId, selection = [] } = body;
   if (!Object.hasOwn(SERVICES, service) || consent !== true ||
       !/^[a-zA-Z0-9-]{16,64}$/.test(requestId || '')) return null;
   if (![name, contact, message, date].every(v => typeof v === 'string')) return null;
   if (name.trim().length < 2 || name.length > 80 || contact.trim().length < 3 ||
       contact.length > 120 || message.trim().length < 10 || message.length > 1500) return null;
+  if (!Array.isArray(selection) || selection.length > 10) return null;
+  const seen = new Set();
+  const selected = [];
+  for (const row of selection) {
+    if (!row || typeof row.id !== 'string' || !Number.isSafeInteger(row.quantity)) return null;
+    const item = itemById.get(row.id);
+    if (!item || seen.has(row.id) || row.quantity < 1 || row.quantity > (item.kind === 'equipment' && item.status === 'catalog' ? (item.quantity || 20) : 1)) return null;
+    seen.add(row.id);
+    selected.push({ id: row.id, quantity: row.quantity });
+  }
   if (date) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date)) ||
         new Date(date).toISOString().slice(0, 10) !== date ||
         date < new Date(Date.now() + 3 * 3600000).toISOString().slice(0, 10)) return null;
   }
-  return { service, name: name.trim(), contact: contact.trim(), message: message.trim(), date, requestId };
+  selected.sort((a, b) => a.id.localeCompare(b.id));
+  return { service, name: name.trim(), contact: contact.trim(), message: message.trim(), date, requestId, selection: selected };
 }
 
 async function telegramSend(token, chatId, text) {
@@ -79,8 +93,9 @@ export function createApp({ env = process.env, send = telegramSend } = {}) {
     };
     try {
       const path = new URL(req.url, 'http://localhost').pathname;
-      if (req.method === 'GET' && path === '/healthz') return json(200, { status: 'ok', version: '2.0.0' });
+      if (req.method === 'GET' && path === '/healthz') return json(200, { status: 'ok', version: CATALOG.version });
       if (req.method === 'GET' && path === '/api/config') return json(200, { bookingEnabled: ready, botUsername });
+      if (req.method === 'GET' && path === '/api/catalog') return json(200, CATALOG);
       if (req.method === 'GET' && assets.has(path)) {
         const [file, type] = assets.get(path);
         const data = await readFile(new URL(`./public/${file}`, import.meta.url));
@@ -129,6 +144,11 @@ export function createApp({ env = process.env, send = telegramSend } = {}) {
         'КОНТЕНТ.ART · Новая заявка', `Номер: ${booking.requestId}`,
         `Направление: ${SERVICES[booking.service]}`, `Имя: ${booking.name}`,
         `Контакт: ${booking.contact}`, `Желаемая дата: ${booking.date || 'Обсудить'}`,
+        booking.selection.length ? 'Выбрано из каталога:\n' + booking.selection.map(row => {
+          const item = itemById.get(row.id);
+          const state = item.status === 'soon' ? 'ожидается, интерес к поступлению' : item.status === 'closed' ? 'интерес к следующему набору' : item.status === 'review' ? 'модель уточняется' : 'требует подтверждения';
+          return `• ${row.quantity} × ${item.title} (${state})`;
+        }).join('\n') : '',
         `Задача: ${booking.message}`, `Telegram ID: ${user.id}`,
         user.username ? `Telegram: @${String(user.username).slice(0, 32)}` : '',
         'Пользователь согласился передать эти данные команде для ответа на заявку.'
