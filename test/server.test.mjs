@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
-import { createApp, verifyInitData } from '../server.mjs';
+import { createApp, verifyInitData, CATALOG } from '../server.mjs';
 
 const token = 'test-only-token';
 function signed({ time = Math.floor(Date.now() / 1000), id = 123 } = {}) {
@@ -66,4 +66,48 @@ test('rate limit blocks a fourth new request in ten minutes', async t => {
   const { post } = await fixture(t, { env: { TELEGRAM_BOT_TOKEN: token, TELEGRAM_ADMIN_CHAT_ID: '123' }, send: async () => 1 });
   for (let i = 0; i < 3; i++) assert.equal((await post({ ...valid(), requestId: `unique-request-id-${i}` })).status, 200);
   assert.equal((await post({ ...valid(), requestId: 'unique-request-id-4' })).status, 429);
+});
+
+test('catalog preserves expected items and states without internal notes', async t => {
+  const { base } = await fixture(t);
+  const response = await fetch(`${base}/api/catalog`);
+  assert.equal(response.status, 200);
+  const text = await response.text();
+  assert.ok(!text.includes('private_note'));
+  const data = JSON.parse(text);
+  assert.equal(data.items.filter(i => i.kind === 'equipment').length, 55);
+  assert.equal(data.items.filter(i => i.kind === 'equipment' && i.status === 'soon').length, 26);
+  assert.equal(data.items.filter(i => i.kind === 'course' && i.status === 'closed').length, 8);
+  assert.equal(data.items.filter(i => i.kind === 'course' && i.status === 'soon').length, 2);
+  assert.equal(data.items.filter(i => i.kind === 'service').length, 58);
+  assert.equal(new Set(data.items.map(i => i.id)).size, data.items.length);
+  assert.ok(data.items.every(i => data.categories[i.category]));
+});
+
+test('selected products are validated and names come from server catalog', async t => {
+  let sent = 0, delivered = '';
+  const { post } = await fixture(t, { env: { TELEGRAM_BOT_TOKEN: token, TELEGRAM_ADMIN_CHAT_ID: '123' }, send: async (_t, _c, text) => { sent++; delivered = text; return 3; } });
+  assert.equal((await post({ ...valid(), selection: [{ id: 'made-up-camera', quantity: 1 }] })).status, 400);
+  const camera = CATALOG.items.find(i => i.kind === 'equipment' && i.title.includes('Pocket Cinema'));
+  const course = CATALOG.items.find(i => i.kind === 'course' && i.status === 'closed');
+  assert.equal((await post({ ...valid(), selection: [{ id: camera.id, quantity: camera.quantity + 1 }] })).status, 400);
+  assert.equal((await post({ ...valid(), selection: [{ id: course.id, quantity: 2 }] })).status, 400);
+  assert.equal((await post({ ...valid(), selection: [{ id: camera.id, quantity: 1 }, { id: camera.id, quantity: 1 }] })).status, 400);
+  assert.equal(sent, 0);
+  const response = await post({ ...valid(), selection: [{ id: camera.id, quantity: 2, title: 'INJECTED NAME', price: 1 }, { id: course.id, quantity: 1 }] });
+  assert.equal(response.status, 200);
+  assert.ok(delivered.includes(`2 × ${camera.title}`));
+  assert.ok(delivered.includes('интерес к следующему набору'));
+  assert.ok(!delivered.includes('INJECTED NAME'));
+  assert.ok(delivered.length <= 4096);
+});
+
+test('selections include upcoming equipment as interest and enforce ten-item cap', async t => {
+  let text = '';
+  const { post } = await fixture(t, { env: { TELEGRAM_BOT_TOKEN: token, TELEGRAM_ADMIN_CHAT_ID: '123' }, send: async (_t, _c, value) => { text = value; return 5; } });
+  const soon = CATALOG.items.find(i => i.kind === 'equipment' && i.status === 'soon');
+  const tooMany = CATALOG.items.slice(0, 11).map(item => ({ id: item.id, quantity: 1 }));
+  assert.equal((await post({ ...valid(), selection: tooMany })).status, 400);
+  assert.equal((await post({ ...valid(), selection: [{ id: soon.id, quantity: 1 }] })).status, 200);
+  assert.match(text, /ожидается, интерес к поступлению/);
 });
