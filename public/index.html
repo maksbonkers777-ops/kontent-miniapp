@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#111210">
+  <meta name="description" content="КОНТЕНТ.ART — съёмки, пространство, обучение и события в Мурманске.">
+  <title>КОНТЕНТ.ART · Фабрика миров</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <header class="header"><a class="brand" href="#home" aria-label="КОНТЕНТ.ART — главная">КОНТЕНТ<span>.ART</span></a><span class="city"><i></i> МУРМАНСК</span></header>
+    <main id="main">
+      <section id="home" class="view" aria-labelledby="home-title">
+        <div class="eyebrow">ФАБРИКА МИРОВ / 01</div>
+        <div class="hero">
+          <p class="hero-top">ТВОЯ ИДЕЯ.<span>НАШ МАСШТАБ.</span></p>
+          <h1 id="home-title">СОЗДАВАЙ.<br>СНИМАЙ.<br><em>ВДОХНОВЛЯЙ.</em></h1>
+          <div class="hero-bottom"><span>АРКТИКА<br>КИНО / ЛЮДИ</span><span class="orbit" aria-hidden="true">✳</span><span>69° N<br>33° E</span></div>
+        </div>
+        <div class="intro"><h2>Место для<br>твоего следующего.</h2><p>Съёмки, обучение и события.<br>От первой идеи до готового проекта.</p></div>
+        <button class="primary wide" data-go="request">Обсудить идею <span aria-hidden="true">↗</span></button>
+        <div class="section-head"><h2>Выбери направление</h2><span>01—04</span></div>
+        <div class="directions">
+          <button class="direction" data-service="production"><span class="number">01 / ПРОДАКШН</span><strong>Истории,<br>которые видят.</strong><span class="card-foot">Видео · фото · монтаж <b>↗</b></span></button>
+          <button class="direction light" data-service="space"><span class="number">02 / ПРОСТРАНСТВО</span><strong>Твоя сцена.<br>Твои правила.</strong><span class="card-foot">Съёмки · встречи · проекты <b>↗</b></span></button>
+          <button class="direction light" data-service="school"><span class="number">03 / КОНТЕНТ-ШКОЛА</span><strong>Меньше теории.<br>Больше «снято».</strong><span class="card-foot">Учиться и создавать <b>↗</b></span></button>
+          <button class="direction" data-service="events"><span class="number">04 / МЕРОПРИЯТИЯ</span><strong>Люди.<br>Идеи. Действие.</strong><span class="card-foot">События и коллаборации <b>↗</b></span></button>
+        </div>
+        <div class="manifesto"><span>СДЕЛАНО НА СЕВЕРЕ</span><p>Большие истории<br>начинаются <em>с тебя.</em></p><a href="#about">О пространстве ↗</a></div>
+      </section>
+      <section id="services" class="view" hidden aria-labelledby="services-title">
+        <div class="eyebrow">ВОЗМОЖНОСТИ / 02</div><h1 id="services-title" class="page-title">ЧТО БУДЕМ<br><em>СОЗДАВАТЬ?</em></h1>
+        <p class="muted">Выбери направление. Формат, даты и стоимость обсудим лично.</p>
+        <div class="service-list">
+          <article><span class="number">01</span><h2>Продакшн</h2><p>Ролики, интервью, фото и монтаж. Расскажи о задаче — обсудим, как воплотить её в кадре.</p><button class="outline" data-service="production">Обсудить съёмку ↗</button></article>
+          <article><span class="number">02</span><h2>Пространство</h2><p>Площадка для творческой работы, съёмок и встреч. Уточним доступность и подходящий формат.</p><button class="outline" data-service="space">Узнать о площадке ↗</button></article>
+          <article><span class="number">03</span><h2>Контент-школа</h2><p>Съёмка, свет, звук и монтаж. Оставь заявку, чтобы узнать о программах и ближайшем наборе.</p><button class="outline" data-service="school">Узнать об обучении ↗</button></article>
+          <article><span class="number">04</span><h2>Мероприятия</h2><p>Лекции, показы и творческие встречи. Узнай о событиях или предложи совместный проект.</p><button class="outline" data-service="events">Обсудить событие ↗</button></article>
+        </div>
+      </section>
+      <section id="request" class="view" hidden aria-labelledby="request-title">
+        <div class="eyebrow">ДАВАЙ НАЧНЁМ / 03</div><h1 id="request-title" class="page-title">ЕСТЬ ИДЕЯ?<br><em>РАССКАЖИ.</em></h1>
+        <p class="muted">Заявка придёт команде КОНТЕНТ. Дату и условия подтвердим лично — отправка формы не бронирует площадку.</p>
+        <div id="connection" class="notice" role="status">Проверяем подключение…</div>
+        <a id="telegram-link" class="outline" hidden>Открыть бота в Telegram ↗</a>
+        <form id="request-form">
+          <label>Направление<select name="service" required><option value="production">Продакшн</option><option value="space">Пространство</option><option value="school">Контент-школа</option><option value="events">Мероприятия</option></select></label>
+          <div class="form-row"><label>Как тебя зовут<input name="name" autocomplete="name" placeholder="Твоё имя" minlength="2" maxlength="80" required></label><label>Желаемая дата <span class="optional">необязательно</span><input name="date" type="date"></label></div>
+          <label>Как с тобой связаться<input name="contact" autocomplete="off" placeholder="@username или телефон" minlength="3" maxlength="120" required></label>
+          <label>Что хочешь создать?<textarea name="message" rows="5" placeholder="Расскажи о задаче, формате и пожеланиях…" minlength="10" maxlength="1500" required></textarea></label>
+          <label class="consent"><input name="consent" type="checkbox" required><span>Согласен передать имя, контакт, текст заявки и данные профиля Telegram команде КОНТЕНТ через Telegram для ответа на эту заявку. <a href="#privacy">Подробнее</a></span></label>
+          <button id="submit" class="primary wide" type="submit" disabled>Отправить заявку <span>↗</span></button>
+          <p id="form-status" class="form-status" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+      <section id="about" class="view" hidden aria-labelledby="about-title">
+        <div class="eyebrow">АРКТИКА / КИНО / ЛЮДИ</div><h1 id="about-title" class="page-title">МЕСТО, ГДЕ<br>РОЖДАЮТСЯ<br><em>МИРЫ.</em></h1>
+        <div class="about-art" aria-hidden="true">К<span>✳</span></div>
+        <h2>КОНТЕНТ.ART</h2><p class="muted">Креативное пространство в Мурманске. Объединяем съёмки, обучение, продакшн и людей, которым есть что сказать.</p>
+        <div class="about-lines"><p>01 <strong>Создаём истории</strong></p><p>02 <strong>Делимся опытом</strong></p><p>03 <strong>Собираем сообщество</strong></p></div>
+        <button class="primary wide" data-go="request">Стать частью <span>↗</span></button>
+      </section>
+      <section id="privacy" class="view" hidden aria-labelledby="privacy-title"><div class="eyebrow">ТВОИ ДАННЫЕ</div><h1 id="privacy-title" class="page-title">ПЕРЕД<br><em>ОТПРАВКОЙ.</em></h1><p>Форма передаёт команде КОНТЕНТ имя, контакт, желаемую дату, текст заявки, ID и имя пользователя Telegram. Они нужны, чтобы ответить и обсудить проект.</p><p>Получатель — администратор, подключённый владельцем приложения. Сообщение доставляется через Telegram и остаётся в его чате. Приложение не ведёт базу заявок и не сохраняет поля формы в браузере. Порядок хранения сообщений определяется настройками и правилами Telegram и получателя.</p><p>Не отправляй пароли, платёжные данные и другие секреты. Для исправления или удаления сообщения обратись к команде через тот же бот.</p><p class="muted">Отправка заявки не означает оплату, подтверждённую бронь или подписку на рассылку.</p><button class="outline" data-go="request">Вернуться к заявке</button></section>
+    </main>
+    <footer class="footer">КОНТЕНТ.ART <span>ФАБРИКА МИРОВ © 2026</span></footer>
+    <nav class="bottom-nav" aria-label="Основная навигация"><a href="#home" aria-current="page"><span aria-hidden="true">⌂</span>Главная</a><a href="#services"><span aria-hidden="true">▦</span>Направления</a><a href="#request"><span aria-hidden="true">↗</span>Заявка</a><a href="#about"><span aria-hidden="true">✳</span>О нас</a></nav>
+  </div>
+</body>
+</html>
